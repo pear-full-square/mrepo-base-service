@@ -9,6 +9,7 @@ import { hooks } from 'mrepo-base-request'
 
 export const STATE = '/runtime/service.json'
 
+// log: none (one read; moveTo and transition say what was done)
 export async function stateOf (exec) {
   return JSON.parse((await exec.read(STATE)).toString())
 }
@@ -16,7 +17,9 @@ export async function stateOf (exec) {
 // The state moved: the answer says what was done (done: initialised,
 // started, stopped, shut down) and the state the service is in now.
 export async function moveTo (exec, state, done) {
-  exec.put(STATE, json.encode({ ...await stateOf(exec), state }))
+  const was = await stateOf(exec)
+  exec.put(STATE, json.encode({ ...was, state }))
+  exec.log('verbose', 'moved', { from: was.state, to: state })
   return { service: done, state }
 }
 
@@ -25,9 +28,10 @@ export async function moveTo (exec, state, done) {
 // this same execution, as the mrepo's own; then the state moved. A hook that
 // fails fails the transition: nothing of it stays.
 export async function transition (exec, name, state, done) {
-  for (const h of await hooks(exec, name)) {
-    await exec.run(h.command, { own: true })
-    exec.log?.('info', 'hook', { transition: name, hook: h.name, command: h.command.join(' ') })
+  const found = await hooks(exec, name)
+  exec.log('debug', 'hooks', { transition: name, hooks: found.map(h => h.name) })
+  for (const h of found) {
+    await exec.step('hook', { transition: name, hook: h.name, command: h.command.join(' ') }, () => exec.run(h.command, { own: true }), 'info')
   }
   return moveTo(exec, state, done)
 }
