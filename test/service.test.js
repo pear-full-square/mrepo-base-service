@@ -10,6 +10,11 @@ function context (state, hooks = {}) {
   return {
     ran,
     read: async uri => { if (!files[uri]) throw new Error('none'); return files[uri] },
+    // the rest of an execution context, standing in: a file that may not
+    // be there, the log (kept: entries), a step run as it is
+    find: async function (p) { try { return await this.read(p) } catch { return null } },
+    log: function (level, event, data = {}) { (this.entries ??= []).push({ level, event, ...data }) },
+    step: async function (event, data, fn, level = 'verbose') { const r = await fn(); (this.entries ??= []).push({ level, event, ...(typeof data === 'function' ? data(r) : data) }); return r },
     put: (uri, bytes) => { files[uri] = Buffer.from(bytes) },
     select: async pattern => Object.keys(files).filter(p => p.startsWith(pattern.slice(0, -1))).map(p => [p, {}]),
     run: async (command, opts) => { if (command[0] === 'fail/now') throw new Error('refused'); ran.push([command.join(' '), opts]) }
