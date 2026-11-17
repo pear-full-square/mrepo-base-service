@@ -2,4 +2,4 @@
 import { transition } from '../../internal/state.js'
 
 // log: in transition (../../internal/state.js): its hooks, the state moved
-export const initialise = exec => transition(exec, 'initialise', 'initialised', 'initialised')
+export const initialise = (exec, form) => transition(exec, 'initialise', 'initialised', 'initialised', form)
