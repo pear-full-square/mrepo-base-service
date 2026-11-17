@@ -21,19 +21,17 @@ A hook that fails fails the transition. Offered by
 
 ## Hooks
 
-`transition(exec, name, state, done)`, in `internal/state.js`: the hooks
-of `initialise`, `start`, `stop` and `shutdown`, each run with
-`exec.run(command, { own: true })`, as the mrepo's own, and logged in the
-request. What the door opens and closes is two of them: a `start` hook
-that activates a protocol, a `stop` hook that deactivates it.
+`transition(exec, name, state, done, form)`, in `internal/state.js`: the
+hook file of `initialise`, `start`, `stop` or `shutdown`, its lines run
+in turn, logged in the request when it resumes. What the door opens and
+closes is two of them: a `start` line that activates a protocol, a
+`stop` line that deactivates it.
 
-A shell hook, `<name>.sh`, is run by the runtime with `sh`, outside the
-execution: the transition waits for its shell hooks (`exec.wait`), one
-after the other, the runtime free meanwhile to execute what they send
-in; their `haicc` reaches the mrepo straight, `HAICC_MREPO` its folder,
-`HAICC_MREPO_URI` its unique URI. Then the request is resumed and the
-state moved; a hook that stops with another exit code fails the
-transition.
+A transition's hook file, `/runtime/hooks/<transition>.haicc`, is lines
+of simple commands: the transition waits for them (`exec.wait`), each
+run as the mrepo's own internal request, one after the other, the
+runtime free meanwhile; then the request is resumed and the state moved.
+A line that fails fails the transition: the state stays.
 
 ## Answers
 
