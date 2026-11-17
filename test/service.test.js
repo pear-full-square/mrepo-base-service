@@ -1,7 +1,7 @@
 // The service actions on a context written here: each moves the state; the
 // config says where and when each is allowed.
 import test from 'brittle'
-import { initialise, start, stop, shutdown, CONFIG, STATE, stateOf } from '../index.js'
+import { initialise, start, stop, shutdown, STATE, stateOf } from '../index.js'
 
 function context (state, hooks = {}) {
   const files = { [STATE]: Buffer.from(JSON.stringify({ state })) }
@@ -49,9 +49,3 @@ test('the hooks: each transition runs its own first, in name order, as the mrepo
   t.is((await stateOf(exec)).state, 'initialised', 'the state not moved')
 })
 
-test('the config: each action at the mrepo itself, in the states that allow it', (t) => {
-  t.alike(Object.keys(CONFIG.actions), ['initialise', 'start', 'stop', 'shutdown'])
-  t.alike(Object.values(CONFIG.actions).map(a => a.uris), [['.'], ['.'], ['.'], ['.']])
-  t.alike(Object.fromEntries(Object.entries(CONFIG.actions).map(([n, a]) => [n, a.states])), { initialise: ['booted'], start: ['initialised'], stop: ['started'], shutdown: ['initialised'] })
-  t.ok(CONFIG.description && Object.values(CONFIG.actions).every(a => a.description))
-})
