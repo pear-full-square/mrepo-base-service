@@ -36,7 +36,7 @@ export async function transition (exec, name, state, done, form = {}) {
     if (text !== null) {
       const lines = parse(text)
       exec.log('debug', 'hooks', { transition: name, lines: lines.length })
-      return exec.wait(() => runLines({ dir: exec.runtime.dir, uri: exec.runtime.uri, submit: exec.runtime.submit, answer: exec.runtime.answer }, lines, '.'))
+      return exec.wait(() => runLines({ dir: exec.runtime.dir, uri: exec.runtime.uri, submit: exec.runtime.submit, answer: exec.runtime.answer, own: exec.runtime.own }, lines, '.'))
     }
   } else exec.log('info', 'hooks', { transition: name, ran: (resumed.output ?? []).map(r => r.line) })
   return moveTo(exec, state, done)
