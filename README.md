@@ -27,6 +27,14 @@ of `initialise`, `start`, `stop` and `shutdown`, each run with
 request. What the door opens and closes is two of them: a `start` hook
 that activates a protocol, a `stop` hook that deactivates it.
 
+A shell hook, `<name>.sh`, is run by the runtime with `sh`, outside the
+execution: the transition waits for its shell hooks (`exec.wait`), one
+after the other, the runtime free meanwhile to execute what they send
+in; their `haicc` reaches the mrepo straight, `HAICC_MREPO` its folder,
+`HAICC_MREPO_URI` its unique URI. Then the request is resumed and the
+state moved; a hook that stops with another exit code fails the
+transition.
+
 ## Answers
 
 Each action answers what was done and the state now: `{ service, state }`.

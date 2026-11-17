@@ -5,10 +5,16 @@ import { initialise, start, stop, shutdown, STATE, stateOf } from '../index.js'
 
 function context (state, hooks = {}) {
   const files = { [STATE]: Buffer.from(JSON.stringify({ state })) }
-  for (const [f, command] of Object.entries(hooks)) files[`/runtime/hooks/${f}.json`] = Buffer.from(JSON.stringify(command))
+  for (const [t, text] of Object.entries(hooks)) files[`/runtime/hooks/${t}.haicc`] = Buffer.from(text)
   const ran = []
+  const jobs = []
   return {
     ran,
+    jobs,
+    runtime: { dir: '/x', uri: 'local/x' },
+    resumed: null,
+    // a job waited for: kept, the request's answer none (it waits)
+    wait: job => { jobs.push(job); return null },
     read: async uri => { if (!files[uri]) throw new Error('none'); return files[uri] },
     // the rest of an execution context, standing in: a file that may not
     // be there, the log (kept: entries), a step run as it is
@@ -31,21 +37,15 @@ test('the actions: the state moved, booted to started and back', async (t) => {
   t.alike(exec.ran, [], 'no hooks dropped in: none run')
 })
 
-test('the hooks: each transition runs its own first, in name order, as the mrepo\'s own; one failing fails the transition', async (t) => {
-  const exec = context('booted', {
-    'initialise/b-extract': ['help/extract'],
-    'initialise/a-ready': ['x/ready'],
-    'start/activate-boot': ['protocol/activate', '.', 'boot'],
-    'stop/deactivate-boot': ['protocol/deactivate', '.', 'boot'],
-    'shutdown/fail': ['fail/now']
-  })
-  await initialise(exec)
-  t.alike(exec.ran, [['x/ready', { own: true }], ['help/extract', { own: true }]], 'initialise: its hooks, by name, each run in its execution as the mrepo\'s own')
-  await start(exec)
-  t.alike(exec.ran.at(-1), ['protocol/activate . boot', { own: true }], 'start: the door opened by its hook')
-  await stop(exec)
-  t.alike(exec.ran.at(-1), ['protocol/deactivate . boot', { own: true }], 'stop: closed again')
-  await t.exception(shutdown(exec), /refused/, 'a hook that fails: the transition fails')
+test('the hooks: a transition with a hook file waits for its lines, then, resumed, moves the state; a line that failed fails it', async (t) => {
+  const exec = context('booted', { initialise: '# made ready\ninfo/extract\n', start: 'protocol/activate . boot\n' })
+  t.is(await initialise(exec), null, 'initialise: its hook file there: the request waits for its lines')
+  t.alike([exec.jobs.length, (await stateOf(exec)).state], [1, 'booted'], 'one job, its lines through the mrepo\'s own inbox; the state not moved yet')
+  const resumed = { ...exec, resumed: { output: [{ line: 'info/extract', output: {} }] } }
+  t.alike(await initialise(resumed), { service: 'initialised', state: 'initialised' }, 'resumed: the state moved, the answer as ever')
+  t.is(await start(exec), null, 'start: waits for its hook too')
+  await t.exception(start({ ...exec, resumed: { error: 'line 1: protocol/activate . boot: refused' } }), /hook start: line 1: protocol\/activate \. boot: refused/, 'resumed with a failure: the transition fails, the line said')
   t.is((await stateOf(exec)).state, 'initialised', 'the state not moved')
+  t.alike(await stop(exec), { service: 'stopped', state: 'initialised' }, 'no hook file for stop: no wait, the state moved at once')
 })
 
