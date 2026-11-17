@@ -35,4 +35,4 @@ Each action answers what was done and the state now: `{ service, state }`.
 
 ## Tests
 
-- `brittle-bare test/*.test.js`: the actions on a context written for it.
+- `brittle-bare test/*.test.js` (Bare installed): the actions on a context written for it.
