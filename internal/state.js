@@ -36,13 +36,3 @@ export async function transition (exec, name, state, done) {
   return moveTo(exec, state, done)
 }
 
-const at = states => ({ uris: ['.'], states })
-export const CONFIG = {
-  description: 'The service of the mrepo\'s external API, moved between its states: booted, initialised, started.',
-  actions: {
-    initialise: { ...at(['booted']), description: 'From booted to initialised: the mrepo made ready.' },
-    start: { ...at(['initialised']), description: 'From initialised to started: the external API open.' },
-    stop: { ...at(['started']), description: 'From started back to initialised: the external API closed.' },
-    shutdown: { ...at(['initialised']), description: 'From initialised back to booted.' }
-  }
-}

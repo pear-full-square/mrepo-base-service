@@ -9,10 +9,10 @@ config names; it runs the hooks of its transition, the commands in
 A hook that fails fails the transition. Offered by
 `haiccing/base-package-service`.
 
-| | |
-|---|---|
-| [external/](external/) | the service protocol's actions |
-| [test/](test/) | its tests |
+## Links
+
+- [external](external/)
+- [test](test/)
 
 ## States
 
@@ -33,12 +33,6 @@ Each action answers what was done and the state now: `{ service, state }`.
 `stop` answers `stopped` with the state `initialised`; `shutdown` answers
 `shut down` with the state `booted`.
 
-## Config
-
-`CONFIG`, in `internal/state.js`: each action at the mrepo itself, `.`, with the states that
-allow it. The runtime's check reads it: the state machine is configuration,
-not code.
-
 ## Tests
 
-- `npm test`: the actions on a context written for it, the config.
+- `npm test`: the actions on a context written for it.
