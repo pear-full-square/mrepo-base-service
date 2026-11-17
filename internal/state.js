@@ -5,7 +5,7 @@
 // that allow it (the state machine: booted -> initialised -> started, and
 // back).
 import * as json from 'mycelium-value-json'
-import { hooks } from 'mrepo-base-request'
+import { hookOf, parse, runLines } from 'mrepo-base-request'
 
 export const STATE = '/runtime/service.json'
 
@@ -23,16 +23,21 @@ export async function moveTo (exec, state, done) {
   return { service: done, state }
 }
 
-// A transition made: its hooks run first (the commands the mrepo's defining
-// package dropped into /runtime/hooks/<transition>/, in name order), each in
-// this same execution, as the mrepo's own; then the state moved. A hook that
-// fails fails the transition: nothing of it stays.
-export async function transition (exec, name, state, done) {
-  const found = await hooks(exec, name)
-  exec.log('debug', 'hooks', { transition: name, hooks: found.map(h => h.name) })
-  for (const h of found) {
-    await exec.step('hook', { transition: name, hook: h.name, command: h.command.join(' ') }, () => exec.run(h.command, { own: true }), 'info')
-  }
+// A transition made: its hook file (/runtime/hooks/<transition>.haicc, the
+// mrepo's defining package's), lines of simple commands, run through the
+// mrepo's own inbox, each its own request; the request waits for them
+// (exec.wait), the runtime free meanwhile to execute them; then resumed,
+// the state moved. A line that fails fails the transition: the state stays.
+export async function transition (exec, name, state, done, form = {}) {
+  const resumed = form.resumed ?? exec.resumed ?? null
+  if (resumed?.error) throw new Error(`hook ${name}: ${resumed.error}`)
+  if (!resumed) {
+    const text = await hookOf(exec, name)
+    if (text !== null) {
+      const lines = parse(text)
+      exec.log('debug', 'hooks', { transition: name, lines: lines.length })
+      return exec.wait(() => runLines({ dir: exec.runtime.dir, uri: exec.runtime.uri, submit: exec.runtime.submit, answer: exec.runtime.answer, own: exec.runtime.own }, lines, '.'))
+    }
+  } else exec.log('info', 'hooks', { transition: name, ran: (resumed.output ?? []).map(r => r.line) })
   return moveTo(exec, state, done)
 }
-

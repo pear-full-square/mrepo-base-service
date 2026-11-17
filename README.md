@@ -21,11 +21,17 @@ A hook that fails fails the transition. Offered by
 
 ## Hooks
 
-`transition(exec, name, state, done)`, in `internal/state.js`: the hooks
-of `initialise`, `start`, `stop` and `shutdown`, each run with
-`exec.run(command, { own: true })`, as the mrepo's own, and logged in the
-request. What the door opens and closes is two of them: a `start` hook
-that activates a protocol, a `stop` hook that deactivates it.
+`transition(exec, name, state, done, form)`, in `internal/state.js`: the
+hook file of `initialise`, `start`, `stop` or `shutdown`, its lines run
+in turn, logged in the request when it resumes. What the door opens and
+closes is two of them: a `start` line that activates a protocol, a
+`stop` line that deactivates it.
+
+A transition's hook file, `/runtime/hooks/<transition>.haicc`, is lines
+of simple commands: the transition waits for them (`exec.wait`), each
+run as the mrepo's own internal request, one after the other, the
+runtime free meanwhile; then the request is resumed and the state moved.
+A line that fails fails the transition: the state stays.
 
 ## Answers
 
@@ -35,4 +41,4 @@ Each action answers what was done and the state now: `{ service, state }`.
 
 ## Tests
 
-- `brittle-bare test/*.test.js`: the actions on a context written for it.
+- `brittle-bare test/*.test.js` (Bare installed): the actions on a context written for it.
