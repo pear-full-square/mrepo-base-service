@@ -10,8 +10,9 @@ Nothing more yet: the place for a type's own actions when it is made ready.
 
 ## Returns
 
-`{ service: "initialised", state: "initialised" }`: what was done, and the state the
-service is in now.
+What it did, said: `The service is <done>: its state is <state>.`; a
+repeat: `The service was <state> already: nothing moved`, its hook run
+again where it has one.
 
 ## Errors
 
