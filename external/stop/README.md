@@ -8,8 +8,9 @@ Moves the service from started back to initialised: the external API closed.
 
 ## Returns
 
-`{ service: "stopped", state: "initialised" }`: what was done, and the state the
-service is in now.
+What it did, said: `The service is <done>: its state is <state>.`; a
+repeat: `The service was <state> already: nothing moved`, its hook run
+again where it has one.
 
 ## Errors
 

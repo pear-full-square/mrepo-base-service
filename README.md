@@ -37,7 +37,10 @@ A line that fails fails the transition: the state stays.
 
 ## Answers
 
-Each action answers what was done and the state now: `{ service, state }`.
+Each action says what was done and the state now: `The service is
+started: its state is started.`; a repeat: `The service was started
+already: nothing moved`, its hook run again where it has one. The state
+itself: `/runtime/service.json`.
 `stop` answers `stopped` with the state `initialised`; `shutdown` answers
 `shut down` with the state `booted`.
 
